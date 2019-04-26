@@ -3,7 +3,7 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
 
-class odoo-producteca(models.Model):
+class SaleOrder(models.Model):
 	_inherit = 'sale.order'
 
 	@api.model
