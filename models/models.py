@@ -35,7 +35,6 @@ class SaleOrder(models.Model):
 				user = self.env['res.partner'].search([('ref', '=', ref)])
 
 				if not user:
-					#raise ValidationError("!")
 					#create partner
 					self.env['res.partner'].create({
 						'name': name,
@@ -48,6 +47,31 @@ class SaleOrder(models.Model):
 						'zip': zip
 					})
 					self.env.cr.commit()
+					user = self.env['res.partner'].search([('ref', '=', ref)])
+
+				lines = child.find('Lines')
+				price = lines.find('Price').text
+				qty = lines.find('Quantity').text
+				description = lines.find('Description').text
+				code = lines.find('Code').text
+				sku = lines.find('Sku').text
+
+				#Payment Data
+				date = ''
+				amount = ''
+				status = ''
+				method = ''
+				notes = ''
+				integration_id = ''
+
+				payments = child.find('Payments').findall('Payment')
+				for payment in payments:
+					date = payment.find('Date').text
+					amount = payment.find('Amount').text
+					status = payment.find('Status').text
+					method = payment.find('Method').text
+					notes = payment.find('Notes').text
+					integration_id = payment.find('IntegrationId').text
 
 				raise ValidationError(name + " Test")
 
