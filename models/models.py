@@ -16,6 +16,7 @@ class SaleOrder(models.Model):
 		files = os.listdir(producteca_path)
 
 		for order in files:
+			f = open(producteca_path + order, 'r')
 			tree = ET.parse(producteca_path + order)
 			root = tree.getroot()
 
@@ -56,6 +57,17 @@ class SaleOrder(models.Model):
 				code = lines.find('Code').text
 				sku = lines.find('Sku').text
 
+				product = self.env['product.template'].search([('default_code', '=', sku)])
+
+				if not product:
+					self.env['product.template'].create({
+						'name': description,
+						'default_code': sku,
+						'list_price': price
+					})
+					self.env.cr.commit()
+					product = self.env['product.template'].search([('default_code', '=', sku)])
+
 				#Payment Data
 				date = ''
 				amount = ''
@@ -73,7 +85,20 @@ class SaleOrder(models.Model):
 					notes = payment.find('Notes').text
 					integration_id = payment.find('IntegrationId').text
 
-				raise ValidationError(name + " Test")
+				if not self.env['sale.order'].search([('integration_id', '=', integration_id)]):
+					self.env['sale.order'].create({
+                                		'partner_id': user.id,
+						'integration_id': integration_id,
+						'doc_xml': f.read()
+					})
+					self.env.cr.commit()
+					self.env['sale.order.line'].create({
+						'order_id': self.env['sale.order'].search([('integration_id', '=', integration_id)]).id,
+						'product_id': product.id,
+						'qty': qty,
+						'price_unit': float(price) / 1.21,
+					})
+					self.env.cr.commit()
 
 	integration_id = fields.Char('IntegrationId')
 	doc_xml = fields.Text('XML')
